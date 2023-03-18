@@ -104,7 +104,7 @@ class RenderMemeListRequest(BaseModel):
     order_direction: Literal["row", "column"] = "column"
     columns: int = 4
     column_align: Literal["left", "center", "right"] = "left"
-    item_padding: Tuple[int, int] = (15, 2)
+    item_padding: Tuple[int, int] = (15, 6)
     image_padding: Tuple[int, int] = (50, 50)
     bg_color: ColorType = "white"
     fontsize: int = 30
