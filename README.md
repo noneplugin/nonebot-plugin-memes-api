@@ -55,7 +55,7 @@ pip install nonebot_plugin_memes_api
 
 > 以下配置项可在 `.env.*` 文件中设置，具体参考 [NoneBot 配置方式](https://v2.nonebot.dev/docs/tutorial/configuration#%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F)
 
-### `meme_generator_base_url`
+#### `meme_generator_base_url`
  - 类型：`str`
  - 默认：`http://127.0.0.1:2233`
  - 说明：meme-generator web server 地址
