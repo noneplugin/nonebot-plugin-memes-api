@@ -14,7 +14,7 @@ from nonebot_plugin_localstore import get_config_file
 from .config import memes_config
 from .request import MemeInfo, get_meme_info, get_meme_keys
 
-config_path = get_config_file("nonebot_plugin_memes", "meme_manager.yml")
+config_path = get_config_file("nonebot_plugin_memes_api", "meme_manager.yml")
 
 
 class MemeMode(IntEnum):

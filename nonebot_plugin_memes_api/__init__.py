@@ -59,7 +59,7 @@ __plugin_meta__ = PluginMetadata(
     description="制作各种沙雕表情包",
     usage="发送“表情包制作”查看表情包列表",
     extra={
-        "unique_name": "memes",
+        "unique_name": "memes_api",
         "author": "meetwq <meetwq@gmail.com>",
         "version": "0.1.0",
     },
