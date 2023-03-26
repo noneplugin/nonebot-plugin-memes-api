@@ -13,17 +13,17 @@ from nonebot.params import Depends
 from nonebot.typing import T_State
 
 from .config import memes_config
-from .request import MemeInfo
-from .utils import (
+from .data_source import (
     ImageSource,
     ImageUrl,
     User,
     V11User,
     V12User,
     check_user_id,
-    split_text,
     user_avatar,
 )
+from .request import MemeInfo
+from .utils import split_text
 
 MSG_KEY = "MSG"
 TEXTS_KEY = "TEXTS"

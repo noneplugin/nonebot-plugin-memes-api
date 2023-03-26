@@ -1,26 +1,13 @@
 import asyncio
-import hashlib
 import re
 import shlex
-from dataclasses import dataclass
-from typing import List, TypedDict, Union
+from typing import List
 
 import httpx
-from nonebot.adapters.onebot.v11 import Bot as V11Bot
-from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
-from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
-from nonebot.adapters.onebot.v12 import Bot as V12Bot
-from nonebot.adapters.onebot.v12 import ChannelMessageEvent as V12CMEvent
-from nonebot.adapters.onebot.v12 import GroupMessageEvent as V12GMEvent
-from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
 from nonebot.log import logger
 
-from .exception import ArgParserExit
+from .exception import ArgParserExit, NetworkError
 from .request import MemeInfo, parse_meme_args
-
-
-class NetworkError(Exception):
-    pass
 
 
 async def download_url(url: str) -> bytes:
@@ -34,120 +21,6 @@ async def download_url(url: str) -> bytes:
                 logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
                 await asyncio.sleep(3)
     raise NetworkError(f"{url} 下载失败！")
-
-
-@dataclass
-class ImageSource:
-    async def get_image(self) -> bytes:
-        raise NotImplementedError
-
-
-@dataclass
-class ImageUrl(ImageSource):
-    url: str
-
-    async def get_image(self) -> bytes:
-        return await download_url(self.url)
-
-
-@dataclass
-class QQAvatar(ImageSource):
-    qq: str
-
-    async def get_image(self) -> bytes:
-        url = f"http://q1.qlogo.cn/g?b=qq&nk={self.qq}&s=640"
-        data = await download_url(url)
-        if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
-            url = f"http://q1.qlogo.cn/g?b=qq&nk={self.qq}&s=100"
-            data = await download_url(url)
-        return data
-
-
-class PlatformUnsupportError(Exception):
-    def __init__(self, platform: str):
-        self.platform = platform
-
-
-@dataclass
-class UnsupportAvatar(ImageSource):
-    platform: str
-
-    async def get_image(self) -> bytes:
-        raise PlatformUnsupportError(self.platform)
-
-
-def user_avatar(
-    bot: Union[V11Bot, V12Bot], event: Union[V11MEvent, V12MEvent], user_id: str
-) -> ImageSource:
-    if isinstance(bot, V11Bot):
-        return QQAvatar(qq=user_id)
-
-    assert isinstance(event, V12MEvent)
-    platform = bot.platform
-    if platform == "qq":
-        return QQAvatar(qq=user_id)
-
-    return UnsupportAvatar(platform)
-
-
-def check_user_id(bot: Union[V11Bot, V12Bot], user_id: str) -> bool:
-    platform = "qq" if isinstance(bot, V11Bot) else bot.platform
-
-    if platform == "qq":
-        return user_id.isdigit() and 11 >= len(user_id) >= 5
-
-    return False
-
-
-class UserInfo(TypedDict):
-    name: str
-    gender: str
-
-
-@dataclass
-class User:
-    async def get_info(self) -> UserInfo:
-        raise NotImplementedError
-
-
-@dataclass
-class V11User(User):
-    bot: V11Bot
-    event: V11MEvent
-    user_id: int
-
-    async def get_info(self) -> UserInfo:
-        if isinstance(self.event, V11GMEvent):
-            info = await self.bot.get_group_member_info(
-                group_id=self.event.group_id, user_id=self.user_id
-            )
-        else:
-            info = await self.bot.get_stranger_info(user_id=self.user_id)
-        name = info.get("card", "") or info.get("nickname", "")
-        gender = info.get("sex", "")
-        return UserInfo(name=name, gender=gender)
-
-
-@dataclass
-class V12User(User):
-    bot: V12Bot
-    event: V12MEvent
-    user_id: str
-
-    async def get_info(self) -> UserInfo:
-        if isinstance(self.event, V12GMEvent):
-            info = await self.bot.get_group_member_info(
-                group_id=self.event.group_id, user_id=self.user_id
-            )
-        elif isinstance(self.event, V12CMEvent):
-            info = await self.bot.get_guild_member_info(
-                guild_id=self.event.guild_id, user_id=self.user_id
-            )
-        else:
-            info = await self.bot.get_user_info(user_id=self.user_id)
-        name = info.get("user_displayname", "") or info.get("user_name", "")
-        gender = "unknown"
-        return UserInfo(name=name, gender=gender)
 
 
 def split_text(text: str) -> List[str]:

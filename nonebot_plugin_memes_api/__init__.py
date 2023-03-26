@@ -32,6 +32,7 @@ from nonebot.typing import T_Handler, T_State
 from pypinyin import Style, pinyin
 
 from .config import memes_config
+from .data_source import ImageSource, User, UserInfo
 from .depends import (
     IMAGE_SOURCES_KEY,
     TEXTS_KEY,
@@ -51,14 +52,7 @@ from .request import (
     render_meme_list,
 )
 from .rule import command_rule, regex_rule
-from .utils import (
-    ImageSource,
-    NetworkError,
-    PlatformUnsupportError,
-    User,
-    UserInfo,
-    meme_info,
-)
+from .utils import meme_info
 
 __plugin_meta__ = PluginMetadata(
     name="表情包制作",

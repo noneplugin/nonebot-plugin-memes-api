@@ -1,3 +1,12 @@
+class NetworkError(Exception):
+    pass
+
+
+class PlatformUnsupportError(Exception):
+    def __init__(self, platform: str):
+        self.platform = platform
+
+
 class MemeGeneratorException(Exception):
     def __init__(self, message: str):
         self.message = message
