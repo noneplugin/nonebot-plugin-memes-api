@@ -341,9 +341,36 @@ def handler(meme: MemeInfo) -> T_Handler:
     return handle
 
 
+async def random_handler(bot: Union[V11Bot, V12Bot], state: T_State, matcher: Matcher):
+    texts: List[str] = state[TEXTS_KEY]
+    users: List[User] = state[USERS_KEY]
+    image_sources: List[ImageSource] = state[IMAGE_SOURCES_KEY]
+
+    random_meme = random.choice(
+        [
+            meme
+            for meme in meme_manager.memes
+            if (
+                (meme.params.min_images <= len(image_sources) <= meme.params.max_images)
+                and (meme.params.min_texts <= len(texts) <= meme.params.max_texts)
+            )
+        ]
+    )
+    await process(bot, matcher, random_meme, image_sources, texts, users)
+
+
+random_matcher = on_message(command_rule(["随机表情"]), block=False, priority=12)
+fake_meme = MemeInfo(key="_fake")
+random_matcher.append_handler(random_handler, parameterless=[split_msg_v11(fake_meme)])
+random_matcher.append_handler(random_handler, parameterless=[split_msg_v12(fake_meme)])
+
+
+matchers: Dict[str, List[Type[Matcher]]] = {}
+
+
 def create_matchers():
     for meme in meme_manager.memes:
-        matchers: List[Type[Matcher]] = []
+        matchers[meme.key] = []
         if meme.keywords:
             # 纯文字输入的表情，在命令后加空格以防止误触发
             keywords = (
@@ -351,49 +378,37 @@ def create_matchers():
                 if meme.params.min_images == 0 and meme.params.max_images == 0
                 else meme.keywords
             )
-            matchers.append(
+            matchers[meme.key].append(
                 on_message(command_rule(keywords), block=False, priority=12)
             )
         if meme.patterns:
-            matchers.append(
+            matchers[meme.key].append(
                 on_message(regex_rule(meme.patterns), block=False, priority=12)
             )
 
-        for matcher in matchers:
+        for matcher in matchers[meme.key]:
+            matcher.plugin = random_matcher.plugin
+            matcher.plugin_name = random_matcher.plugin_name
             matcher.append_handler(handler(meme), parameterless=[split_msg_v11(meme)])
             matcher.append_handler(handler(meme), parameterless=[split_msg_v12(meme)])
 
-    async def random_handler(
-        bot: Union[V11Bot, V12Bot], state: T_State, matcher: Matcher
-    ):
-        texts: List[str] = state[TEXTS_KEY]
-        users: List[User] = state[USERS_KEY]
-        image_sources: List[ImageSource] = state[IMAGE_SOURCES_KEY]
 
-        random_meme = random.choice(
-            [
-                meme
-                for meme in meme_manager.memes
-                if (
-                    (
-                        meme.params.min_images
-                        <= len(image_sources)
-                        <= meme.params.max_images
-                    )
-                    and (meme.params.min_texts <= len(texts) <= meme.params.max_texts)
-                )
-            ]
-        )
-        await process(bot, matcher, random_meme, image_sources, texts, users)
+def destroy_matchers():
+    for _, meme_matchers in matchers.items():
+        for meme_matcher in meme_matchers:
+            meme_matcher.destroy()
+    matchers.clear()
 
-    random_matcher = on_message(command_rule(["随机表情"]), block=False, priority=12)
-    fake_meme = MemeInfo(key="_fake")
-    random_matcher.append_handler(
-        random_handler, parameterless=[split_msg_v11(fake_meme)]
-    )
-    random_matcher.append_handler(
-        random_handler, parameterless=[split_msg_v12(fake_meme)]
-    )
+
+refresh_matcher = on_message(command_rule(["刷新表情", "更新表情"]), block=True, priority=11)
+
+
+@refresh_matcher.handle()
+async def _(matcher: Matcher):
+    destroy_matchers()
+    await meme_manager.init()
+    create_matchers()
+    await matcher.finish("表情更新成功")
 
 
 from nonebot import get_driver
