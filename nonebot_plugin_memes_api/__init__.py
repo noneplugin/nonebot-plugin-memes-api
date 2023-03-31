@@ -61,7 +61,7 @@ __plugin_meta__ = PluginMetadata(
     extra={
         "unique_name": "memes_api",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.1.1",
+        "version": "0.1.2",
     },
 )
 
