@@ -1,10 +1,11 @@
 import asyncio
+import hashlib
 import random
 import traceback
 from itertools import chain
 from typing import Any, Dict, List, NoReturn, Type, Union
 
-from nonebot import on_command, on_message
+from nonebot import on_command, on_message, require
 from nonebot.adapters.onebot.v11 import Bot as V11Bot
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
 from nonebot.adapters.onebot.v11 import Message as V11Msg
@@ -30,6 +31,10 @@ from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
 from nonebot.typing import T_Handler, T_State
 from pypinyin import Style, pinyin
+
+require("nonebot_plugin_localstore")
+
+from nonebot_plugin_localstore import get_cache_dir
 
 from .config import memes_config
 from .data_source import ImageSource, User, UserInfo
@@ -64,6 +69,8 @@ __plugin_meta__ = PluginMetadata(
         "version": "0.1.2",
     },
 )
+
+memes_cache_dir = get_cache_dir("nonebot_plugin_memes_api")
 
 
 PERM_EDIT = GROUP_ADMIN | GROUP_OWNER | PRIVATE_FRIEND | PRIVATE | SUPERUSER
@@ -112,7 +119,21 @@ async def _(bot: Union[V11Bot, V12Bot], matcher: Matcher, user_id: str = get_use
         )
         for meme in memes
     ]
-    img = await render_meme_list(RenderMemeListRequest(meme_list=meme_list))
+
+    # cache rendered meme list
+    meme_list_hashable = [
+        ({"key": meme.key, "keywords": meme.keywords}, prop)
+        for meme, prop in zip(memes, meme_list)
+    ]
+    meme_list_hash = hashlib.md5(str(meme_list_hashable).encode("utf8")).hexdigest()
+    meme_list_cache_file = memes_cache_dir / f"{meme_list_hash}.jpg"
+    if not meme_list_cache_file.exists():
+        img = await render_meme_list(RenderMemeListRequest(meme_list=meme_list))
+        with open(meme_list_cache_file, "wb") as f:
+            f.write(img)
+    else:
+        img = meme_list_cache_file.read_bytes()
+
     msg = "触发方式：“关键词 + 图片/文字”\n发送 “表情详情 + 关键词” 查看表情参数和预览\n目前支持的表情列表："
 
     if isinstance(bot, V11Bot):
@@ -372,18 +393,12 @@ def create_matchers():
     for meme in meme_manager.memes:
         matchers[meme.key] = []
         if meme.keywords:
-            # 纯文字输入的表情，在命令后加空格以防止误触发
-            keywords = (
-                [keyword.rstrip() + " " for keyword in meme.keywords]
-                if meme.params.min_images == 0 and meme.params.max_images == 0
-                else meme.keywords
-            )
             matchers[meme.key].append(
-                on_message(command_rule(keywords), block=False, priority=12)
+                on_message(command_rule(meme.keywords), block=False, priority=12)
             )
         if meme.patterns:
             matchers[meme.key].append(
-                on_message(regex_rule(meme.patterns), block=False, priority=12)
+                on_message(regex_rule(meme.patterns), block=False, priority=13)
             )
 
         for matcher in matchers[meme.key]:

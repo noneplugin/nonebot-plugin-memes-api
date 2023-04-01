@@ -4,12 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
-from nonebot import require
 from nonebot.log import logger
-from pydantic import BaseModel
-
-require("nonebot_plugin_localstore")
 from nonebot_plugin_localstore import get_config_file
+from pydantic import BaseModel
 
 from .config import memes_config
 from .request import MemeInfo, get_meme_info, get_meme_keys
