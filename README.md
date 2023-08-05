@@ -1,7 +1,7 @@
 <div align="center">
 
-  <a href="https://v2.nonebot.dev/">
-    <img src="https://v2.nonebot.dev/logo.png" width="200" height="200" alt="nonebot">
+  <a href="https://nonebot.dev/">
+    <img src="https://nonebot.dev/logo.png" width="200" height="200" alt="nonebot">
   </a>
 
 # nonebot-plugin-memes-api
@@ -11,7 +11,7 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 <p align="center">
   <img src="https://img.shields.io/github/license/noneplugin/nonebot-plugin-memes-api" alt="license">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/nonebot-2.0.0rc1+-red.svg" alt="NoneBot">
+  <img src="https://img.shields.io/badge/nonebot-2.0.0+-red.svg" alt="NoneBot">
   <a href="https://pypi.org/project/nonebot-plugin-memes-api">
     <img src="https://badgen.net/pypi/v/nonebot-plugin-memes-api" alt="pypi">
   </a>
@@ -41,7 +41,7 @@ nb plugin install nonebot_plugin_memes_api
 ```
 pip install nonebot_plugin_memes_api
 ```
-并按照 [NoneBot 加载插件](https://v2.nonebot.dev/docs/tutorial/plugin/load-plugin) 加载插件
+并按照 [NoneBot 加载插件](https://nonebot.dev/docs/tutorial/create-plugin#加载插件) 加载插件
 
 
 #### meme-generator 部署
@@ -53,7 +53,7 @@ pip install nonebot_plugin_memes_api
 
 ### 配置项
 
-> 以下配置项可在 `.env.*` 文件中设置，具体参考 [NoneBot 配置方式](https://v2.nonebot.dev/docs/tutorial/configuration#%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F)
+> 以下配置项可在 `.env.*` 文件中设置，具体参考 [NoneBot 配置方式](https://nonebot.dev/docs/appendices/config)
 
 #### `meme_generator_base_url`
  - 类型：`str`
@@ -63,7 +63,7 @@ pip install nonebot_plugin_memes_api
 #### `memes_command_start`
  - 类型：`List[str]`
  - 默认：`[]`
- - 说明：命令前缀，若不配置则使用 [NoneBot 命令前缀](https://v2.nonebot.dev/docs/api/config#Config-command_start)
+ - 说明：命令前缀，若不配置则使用 [NoneBot 命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator)
 
 #### `memes_command_force_whitespace`
  - 类型：`bool`
