@@ -3,7 +3,7 @@ import hashlib
 import random
 import traceback
 from itertools import chain
-from typing import Annotated, Any, Dict, List, NoReturn, Type
+from typing import Any, Dict, List, NoReturn, Type
 
 from nonebot import on_command, on_message, require
 from nonebot.adapters import Message
@@ -15,6 +15,7 @@ from nonebot.permission import SUPERUSER, Permission
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot.typing import T_Handler, T_State
 from pypinyin import Style, pinyin
+from typing_extensions import Annotated
 
 require("nonebot_plugin_saa")
 require("nonebot_plugin_alconna")
@@ -59,7 +60,7 @@ __plugin_meta__ = PluginMetadata(
     extra={
         "unique_name": "memes_api",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.0",
+        "version": "0.2.1",
     },
 )
 
