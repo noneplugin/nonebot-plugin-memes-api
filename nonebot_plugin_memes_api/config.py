@@ -1,10 +1,10 @@
 from typing import List
 
-from nonebot import get_driver
-from pydantic import BaseModel, Extra
+from nonebot import get_plugin_config
+from pydantic import BaseModel
 
 
-class Config(BaseModel, extra=Extra.ignore):
+class Config(BaseModel):
     meme_generator_base_url: str = "http://127.0.0.1:2233"
     memes_command_start: List[str] = []
     memes_command_force_whitespace: bool = True
@@ -14,4 +14,4 @@ class Config(BaseModel, extra=Extra.ignore):
     memes_use_default_when_no_text: bool = False
 
 
-memes_config = Config.parse_obj(get_driver().config.dict())
+memes_config = get_plugin_config(Config)

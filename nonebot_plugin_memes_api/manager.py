@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+from nonebot.compat import model_dump, type_validate_python
 from nonebot.log import logger
 from nonebot_plugin_localstore import get_config_file
 from pydantic import BaseModel
@@ -134,13 +135,14 @@ class MemeManager:
             with self.__path.open("r", encoding="utf-8") as f:
                 try:
                     raw_list = yaml.safe_load(f)
-                except:
+                except Exception:
                     logger.warning("表情列表解析失败，将重新生成")
         try:
             meme_list = {
-                name: MemeConfig.parse_obj(config) for name, config in raw_list.items()
+                name: type_validate_python(MemeConfig, config)
+                for name, config in raw_list.items()
             }
-        except:
+        except Exception:
             meme_list = {}
             logger.warning("表情列表解析失败，将重新生成")
         self.__meme_list = {meme.key: MemeConfig() for meme in self.memes}
@@ -148,7 +150,9 @@ class MemeManager:
 
     def __dump(self):
         self.__path.parent.mkdir(parents=True, exist_ok=True)
-        meme_list = {name: config.dict() for name, config in self.__meme_list.items()}
+        meme_list = {
+            name: model_dump(config) for name, config in self.__meme_list.items()
+        }
         with self.__path.open("w", encoding="utf-8") as f:
             yaml.dump(meme_list, f, allow_unicode=True)
 

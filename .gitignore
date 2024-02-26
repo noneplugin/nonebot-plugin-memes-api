@@ -2,3 +2,6 @@
 dist/
 .idea/
 .vscode/
+node_modules/
+bot.py
+.env

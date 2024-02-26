@@ -17,20 +17,27 @@ from nonebot.typing import T_Handler, T_State
 from pypinyin import Style, pinyin
 from typing_extensions import Annotated
 
-require("nonebot_plugin_saa")
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_session")
 require("nonebot_plugin_userinfo")
 require("nonebot_plugin_localstore")
 
+from nonebot_plugin_alconna import Image, Text, UniMessage
 from nonebot_plugin_localstore import get_cache_dir
-from nonebot_plugin_saa import Image, MessageFactory
 from nonebot_plugin_session import EventSession, SessionId, SessionIdType, SessionLevel
 from nonebot_plugin_userinfo import ImageSource, UserInfo
 
 from .config import Config, memes_config
 from .depends import IMAGE_SOURCES_KEY, TEXTS_KEY, USER_INFOS_KEY, split_msg
-from .exception import *
+from .exception import (
+    ArgMismatch,
+    ArgParserExit,
+    MemeGeneratorException,
+    NetworkError,
+    PlatformUnsupportError,
+    TextOrNameNotEnough,
+    TextOverLength,
+)
 from .manager import ActionResult, MemeMode, meme_manager
 from .request import (
     MemeInfo,
@@ -52,7 +59,6 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/noneplugin/nonebot-plugin-memes-api",
     config=Config,
     supported_adapters=inherit_supported_adapters(
-        "nonebot_plugin_saa",
         "nonebot_plugin_alconna",
         "nonebot_plugin_session",
         "nonebot_plugin_userinfo",
@@ -60,7 +66,7 @@ __plugin_meta__ = PluginMetadata(
     extra={
         "unique_name": "memes_api",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.1",
+        "version": "0.3.0",
     },
 )
 
@@ -83,12 +89,20 @@ except ImportError:
     pass
 
 
-help_cmd = on_command("表情包制作", aliases={"头像表情包", "文字表情包"}, block=True, priority=11)
-info_cmd = on_command("表情详情", aliases={"表情帮助", "表情示例"}, block=True, priority=11)
+help_cmd = on_command(
+    "表情包制作", aliases={"头像表情包", "文字表情包"}, block=True, priority=11
+)
+info_cmd = on_command(
+    "表情详情", aliases={"表情帮助", "表情示例"}, block=True, priority=11
+)
 block_cmd = on_command("禁用表情", block=True, priority=11, permission=PERM_EDIT)
 unblock_cmd = on_command("启用表情", block=True, priority=11, permission=PERM_EDIT)
-block_cmd_gl = on_command("全局禁用表情", block=True, priority=11, permission=PERM_GLOBAL)
-unblock_cmd_gl = on_command("全局启用表情", block=True, priority=11, permission=PERM_GLOBAL)
+block_cmd_gl = on_command(
+    "全局禁用表情", block=True, priority=11, permission=PERM_GLOBAL
+)
+unblock_cmd_gl = on_command(
+    "全局启用表情", block=True, priority=11, permission=PERM_GLOBAL
+)
 
 
 UserId = Annotated[str, SessionId(SessionIdType.GROUP, include_bot_type=False)]
@@ -124,8 +138,11 @@ async def _(user_id: UserId):
     else:
         img = meme_list_cache_file.read_bytes()
 
-    msg = MessageFactory("触发方式：“关键词 + 图片/文字”\n发送 “表情详情 + 关键词” 查看表情参数和预览\n目前支持的表情列表：")
-    msg.append(Image(img))
+    msg = Text(
+        "触发方式：“关键词 + 图片/文字”\n"
+        "发送 “表情详情 + 关键词” 查看表情参数和预览\n"
+        "目前支持的表情列表："
+    ) + Image(raw=img)
     await msg.send()
 
 
@@ -143,8 +160,7 @@ async def _(matcher: Matcher, arg: Message = CommandArg()):
     info += "表情预览：\n"
     img = await generate_meme_preview(meme.key)
 
-    msg = MessageFactory(info)
-    msg.append(Image(img))
+    msg = Text(info) + Image(raw=img)
     await msg.send()
 
 
@@ -238,23 +254,26 @@ async def process(
         for image_source in image_sources:
             images.append(await image_source.get_image())
     except PlatformUnsupportError as e:
-        await matcher.finish(f"当前平台 “{e.platform}” 暂不支持获取头像，请使用图片输入")
+        await matcher.finish(
+            f"当前平台 “{e.platform}” 暂不支持获取头像，请使用图片输入"
+        )
     except (NetworkError, AdapterException):
         logger.warning(traceback.format_exc())
         await matcher.finish("图片下载出错，请稍后再试")
 
-    args["user_infos"] = [
-        {
-            "name": user_info.user_displayname or user_info.user_name,
-            "gender": user_info.user_gender,
-        }
-        for user_info in user_infos
-    ]
+    args_user_infos = []
+    for user_info in user_infos:
+        name = user_info.user_displayname or user_info.user_name
+        gender = str(user_info.user_gender)
+        if gender not in ("male", "female"):
+            gender = "unknown"
+        args_user_infos.append({"name": name, "gender": gender})
+    args["user_infos"] = args_user_infos
 
     try:
         result = await generate_meme(meme.key, images=images, texts=texts, args=args)
     except TextOverLength:
-        await matcher.finish(f"文字长度过长")
+        await matcher.finish("文字长度过长")
     except ArgMismatch:
         await matcher.finish("参数解析错误")
     except TextOrNameNotEnough:
@@ -263,7 +282,8 @@ async def process(
         logger.warning(traceback.format_exc())
         await matcher.finish("出错了，请稍后再试")
 
-    await MessageFactory([Image(result)]).send()
+    msg = UniMessage.image(raw=result)
+    await msg.send()
 
 
 def handler(meme: MemeInfo) -> T_Handler:
@@ -289,7 +309,8 @@ def handler(meme: MemeInfo) -> T_Handler:
             try:
                 parse_result = await parse_meme_args(meme.key, raw_texts)
             except ArgParserExit:
-                await finish(f"参数解析错误")
+                logger.warning(traceback.format_exc())
+                await finish("参数解析错误")
             texts = parse_result["texts"]
             parse_result.pop("texts")
             args = parse_result
@@ -370,7 +391,9 @@ def destroy_matchers():
     matchers.clear()
 
 
-refresh_matcher = on_message(command_rule(["刷新表情", "更新表情"]), block=True, priority=11)
+refresh_matcher = on_message(
+    command_rule(["刷新表情", "更新表情"]), block=True, priority=11
+)
 
 
 @refresh_matcher.handle()

@@ -2,10 +2,24 @@ import json
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast, overload
 
 import httpx
+from nonebot.compat import model_dump, type_validate_python
 from pydantic import BaseModel
 
 from .config import memes_config
-from .exception import *
+from .exception import (
+    ArgMismatch,
+    ArgModelMismatch,
+    ArgParserExit,
+    ImageNumberMismatch,
+    MemeGeneratorException,
+    NoSuchMeme,
+    OpenImageFailed,
+    ParamsMismatch,
+    ParserExit,
+    TextNumberMismatch,
+    TextOrNameNotEnough,
+    TextOverLength,
+)
 
 BASE_URL = memes_config.meme_generator_base_url
 
@@ -114,7 +128,7 @@ class RenderMemeListRequest(BaseModel):
 
 async def render_meme_list(request: RenderMemeListRequest) -> bytes:
     return await send_request(
-        "/memes/render_list", "POST", "BYTES", json=request.dict()
+        "/memes/render_list", "POST", "BYTES", json=model_dump(request)
     )
 
 
@@ -147,8 +161,8 @@ class MemeInfo(BaseModel):
 
 
 async def get_meme_info(meme_key: str) -> MemeInfo:
-    return MemeInfo.parse_obj(
-        await send_request(f"/memes/{meme_key}/info", "GET", "JSON")
+    return type_validate_python(
+        MemeInfo, await send_request(f"/memes/{meme_key}/info", "GET", "JSON")
     )
 
 
