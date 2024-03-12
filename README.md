@@ -42,6 +42,16 @@ pip install nonebot_plugin_memes_api
 
 并按照 [NoneBot 加载插件](https://nonebot.dev/docs/tutorial/create-plugin#加载插件) 加载插件
 
+#### 配置驱动器​
+
+插件需要“客户端型驱动器”（如 httpx）来下载图片等，驱动器安装和配置参考 [NoneBot 选择驱动器](https://nonebot.dev/docs/advanced/driver)
+
+同时需要在 `.env.*` 配置文件中启用对应的驱动器，例如：
+
+```
+DRIVER=~fastapi+~httpx+~websockets
+```
+
 #### meme-generator 部署
 
 按照 [meme-generator 安装](https://github.com/MeetWq/meme-generator#安装) 中的说明安装，并下载图片、安装字体等
@@ -93,6 +103,12 @@ pip install nonebot_plugin_memes_api
 - 类型：`bool`
 - 默认：`False`
 - 说明：在表情需要至少1段文字且没有输入文字时，是否使用默认文字（谨慎使用，容易误触发）
+
+#### `memes_random_meme_show_info`
+
+- 类型：`bool`
+- 默认：`False`
+- 说明：使用“随机表情”时是否同时发出表情关键词
 
 ### 使用
 
