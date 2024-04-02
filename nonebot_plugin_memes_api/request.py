@@ -30,8 +30,7 @@ async def send_request(
     request_type: Literal["POST", "GET"],
     response_type: Literal["JSON"],
     **kwargs,
-) -> Union[Dict[str, Any], List[Any]]:
-    ...
+) -> Union[Dict[str, Any], List[Any]]: ...
 
 
 @overload
@@ -40,8 +39,7 @@ async def send_request(
     request_type: Literal["POST", "GET"],
     response_type: Literal["BYTES"],
     **kwargs,
-) -> bytes:
-    ...
+) -> bytes: ...
 
 
 @overload
@@ -50,8 +48,7 @@ async def send_request(
     request_type: Literal["POST", "GET"],
     response_type: Literal["TEXT"],
     **kwargs,
-) -> str:
-    ...
+) -> str: ...
 
 
 async def send_request(
