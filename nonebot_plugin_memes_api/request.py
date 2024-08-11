@@ -1,7 +1,10 @@
 import json
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast, overload
+from datetime import datetime
+from typing import Any, Literal, Optional, Union, cast, overload
 
 import httpx
+from arclet.alconna import ArgFlag, Args, Empty, Option
+from arclet.alconna.action import Action
 from nonebot.compat import model_dump, type_validate_python
 from pydantic import BaseModel
 
@@ -9,13 +12,12 @@ from .config import memes_config
 from .exception import (
     ArgMismatch,
     ArgModelMismatch,
-    ArgParserExit,
+    ArgParserMismatch,
     ImageNumberMismatch,
     MemeGeneratorException,
     NoSuchMeme,
     OpenImageFailed,
     ParamsMismatch,
-    ParserExit,
     TextNumberMismatch,
     TextOrNameNotEnough,
     TextOverLength,
@@ -30,7 +32,7 @@ async def send_request(
     request_type: Literal["POST", "GET"],
     response_type: Literal["JSON"],
     **kwargs,
-) -> Union[Dict[str, Any], List[Any]]: ...
+) -> Union[dict[str, Any], list[Any]]: ...
 
 
 @overload
@@ -71,7 +73,7 @@ async def send_request(
         elif 520 <= status_code < 600:
             message = resp.json()["detail"]
             if status_code == 551:
-                raise ArgParserExit(message)
+                raise ArgParserMismatch(message)
             elif status_code == 552:
                 raise ArgModelMismatch(message)
             elif 550 <= status_code < 560:
@@ -90,71 +92,112 @@ async def send_request(
                 raise TextOverLength(message)
             elif status_code == 533:
                 raise OpenImageFailed(message)
-            elif status_code == 534:
-                raise ParserExit(message)
             else:
                 raise MemeGeneratorException(message)
 
 
-ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, int]]
-FontStyle = Literal["normal", "italic", "oblique"]
-FontWeight = Literal["ultralight", "light", "normal", "bold", "ultrabold", "heavy"]
-
-
 class MemeKeyWithProperties(BaseModel):
     meme_key: str
-    fill: ColorType = "black"
-    style: FontStyle = "normal"
-    weight: FontWeight = "normal"
-    stroke_width: int = 0
-    stroke_fill: Optional[ColorType] = None
+    disabled: bool = False
+    labels: list[Literal["new", "hot"]] = []
 
 
 class RenderMemeListRequest(BaseModel):
-    meme_list: Optional[List[MemeKeyWithProperties]] = None
-    order_direction: Literal["row", "column"] = "column"
-    columns: int = 4
-    column_align: Literal["left", "center", "right"] = "left"
-    item_padding: Tuple[int, int] = (15, 6)
-    image_padding: Tuple[int, int] = (50, 50)
-    bg_color: ColorType = "white"
-    fontsize: int = 30
-    fontname: str = ""
-    fallback_fonts: List[str] = []
+    meme_list: list[MemeKeyWithProperties]
+    text_template: str = "{keywords}"
+    add_category_icon: bool = True
 
 
-async def render_meme_list(request: RenderMemeListRequest) -> bytes:
+async def render_meme_list(
+    meme_list: list[MemeKeyWithProperties],
+    *,
+    text_template: str = "{keywords}",
+    add_category_icon: bool = True,
+) -> bytes:
     return await send_request(
-        "/memes/render_list", "POST", "BYTES", json=model_dump(request)
+        "/memes/render_list",
+        "POST",
+        "BYTES",
+        json=model_dump(
+            RenderMemeListRequest(
+                meme_list=meme_list,
+                text_template=text_template,
+                add_category_icon=add_category_icon,
+            )
+        ),
     )
 
 
-async def get_meme_keys() -> List[str]:
-    return cast(List[str], await send_request("/memes/keys", "GET", "JSON"))
+async def get_meme_keys() -> list[str]:
+    return cast(list[str], await send_request("/memes/keys", "GET", "JSON"))
 
 
-class MemeArgs(BaseModel):
+class ParserArg(BaseModel):
     name: str
-    type: str
-    description: Optional[str] = None
+    value: str
     default: Optional[Any] = None
-    enum: Optional[List[Any]] = None
+    flags: Optional[list[ArgFlag]] = None
 
 
-class MemeParams(BaseModel):
-    min_images: int = 0
-    max_images: int = 0
-    min_texts: int = 0
-    max_texts: int = 0
-    default_texts: List[str] = []
-    args: List[MemeArgs] = []
+class ParserOption(BaseModel):
+    names: list[str]
+    args: Optional[list[ParserArg]] = None
+    dest: Optional[str] = None
+    default: Optional[Any] = None
+    action: Optional[Action] = None
+    help_text: Optional[str] = None
+    compact: bool = False
+
+    def option(self) -> Option:
+        args = Args()
+        for arg in self.args or []:
+            args.add(
+                name=arg.name,
+                value=arg.value,
+                default=arg.default or Empty,
+                flags=arg.flags,
+            )
+
+        return Option(
+            name="|".join(self.names),
+            args=args,
+            dest=self.dest,
+            default=self.default,
+            action=self.action,
+            help_text=self.help_text,
+            compact=self.compact,
+        )
+
+
+class CommandShortcut(BaseModel):
+    key: str
+    args: Optional[list[str]] = None
+    humanized: Optional[str] = None
+
+
+class MemeArgsType(BaseModel):
+    args_model: dict[str, Any]
+    args_examples: list[dict[str, Any]]
+    parser_options: list[ParserOption]
+
+
+class MemeParamsType(BaseModel):
+    min_images: int
+    max_images: int
+    min_texts: int
+    max_texts: int
+    default_texts: list[str]
+    args_type: Optional[MemeArgsType] = None
 
 
 class MemeInfo(BaseModel):
     key: str
-    keywords: List[str] = []
-    patterns: List[str] = []
-    params: MemeParams = MemeParams()
+    params_type: MemeParamsType
+    keywords: list[str]
+    shortcuts: list[CommandShortcut]
+    tags: set[str]
+    date_created: datetime
+    date_modified: datetime
 
 
 async def get_meme_info(meme_key: str) -> MemeInfo:
@@ -167,15 +210,8 @@ async def generate_meme_preview(meme_key: str) -> bytes:
     return await send_request(f"/memes/{meme_key}/preview", "GET", "BYTES")
 
 
-async def parse_meme_args(meme_key: str, args: List[str] = []) -> Dict[str, Any]:
-    return cast(
-        Dict[str, Any],
-        await send_request(f"/memes/{meme_key}/parse_args", "POST", "JSON", json=args),
-    )
-
-
 async def generate_meme(
-    meme_key: str, images: List[bytes], texts: List[str], args: Dict[str, Any]
+    meme_key: str, images: list[bytes], texts: list[str], args: dict[str, Any]
 ) -> bytes:
     files = [("images", image) for image in images]
     data = {"texts": texts, "args": json.dumps(args)}

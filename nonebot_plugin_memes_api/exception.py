@@ -30,10 +30,6 @@ class OpenImageFailed(MemeGeneratorException):
     pass
 
 
-class ParserExit(MemeGeneratorException):
-    pass
-
-
 class ParamsMismatch(MemeGeneratorException):
     pass
 
@@ -54,7 +50,7 @@ class ArgMismatch(ParamsMismatch):
     pass
 
 
-class ArgParserExit(ArgMismatch):
+class ArgParserMismatch(ArgMismatch):
     pass
 
 

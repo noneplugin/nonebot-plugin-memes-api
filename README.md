@@ -10,8 +10,8 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 
 <p align="center">
   <img src="https://img.shields.io/github/license/noneplugin/nonebot-plugin-memes-api" alt="license">
-  <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/nonebot-2.2.0+-red.svg" alt="NoneBot">
+  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/nonebot-2.3.0+-red.svg" alt="NoneBot">
   <a href="https://pypi.org/project/nonebot-plugin-memes-api">
     <img src="https://badgen.net/pypi/v/nonebot-plugin-memes-api" alt="pypi">
   </a>
@@ -66,19 +66,7 @@ DRIVER=~fastapi+~httpx+~websockets
 
 - 类型：`str`
 - 默认：`http://127.0.0.1:2233`
-- 说明：meme-generator web server 地址
-
-#### `memes_command_start`
-
-- 类型：`List[str]`
-- 默认：`[]`
-- 说明：命令前缀，若不配置则使用 [NoneBot 命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator)
-
-#### `memes_command_force_whitespace`
-
-- 类型：`bool`
-- 默认：`True`
-- 说明：是否强制要求命令后加空格（仅当命令后是文本时需要加空格）
+- 说明：`meme-generator` web server 地址
 
 #### `memes_disabled_list`
 
@@ -90,7 +78,7 @@ DRIVER=~fastapi+~httpx+~websockets
 
 - 类型：`bool`
 - 默认：`False`
-- 说明：是否在图片/文字数量不符或参数解析错误时提示（若没有设置命令前缀不建议开启，否则极易误触发）
+- 说明：是否在图片/文字数量不符时提示（谨慎使用，容易误触发）
 
 #### `memes_use_sender_when_no_image`
 
@@ -107,8 +95,46 @@ DRIVER=~fastapi+~httpx+~websockets
 #### `memes_random_meme_show_info`
 
 - 类型：`bool`
-- 默认：`False`
+- 默认：`True`
 - 说明：使用“随机表情”时是否同时发出表情关键词
+
+#### `memes_list_image_config`
+
+- 类型：`MemeListImageConfig`
+- 说明：表情列表图相关设置，其中具体设置项如下：
+  - `sort_by`
+    - 类型：`str`
+    - 默认：`"keywords"`
+    - 说明：表情排序方式，可用值：`"key"`（按表情 `key` 排序）、`"keywords"`（按表情首个关键词排序）、`"date_created"`（按表情添加时间排序）、`"date_modified"`（按表情修改时间排序）
+  - `sort_reverse`
+    - 类型：`bool`
+    - 默认：`False`
+    - 说明：是否倒序排序
+  - `text_template`
+    - 类型：`str`
+    - 默认：`"{keywords}"`
+    - 说明：表情显示文字模板，可用变量：`"{index}"`（序号）、`"{key}"`（表情名）、`"{keywords}"`（关键词）、`"{shortcuts}"`（快捷指令）、`"{tags}"`（标签）
+  - `add_category_icon`
+    - 类型：`bool`
+    - 默认：`True`
+    - 说明：是否添加图标以表示类型，即“图片表情包”和“文字表情包”
+  - `label_new_timedelta`
+    - 类型：`timedelta`
+    - 默认：`timedelta(days=30)`
+    - 说明：表情添加时间在该时间间隔以内时，添加 `new` 图标
+- `memes_list_image_config` 在 `.env` 文件中的设置示例如下：
+
+```
+memes_list_image_config='
+{
+  "sort_by": "keywords",
+  "sort_reverse": false,
+  "text_template": "{keywords}",
+  "add_category_icon": true,
+  "label_new_timedelta": "P30D"
+}
+'
+```
 
 ### 使用
 
