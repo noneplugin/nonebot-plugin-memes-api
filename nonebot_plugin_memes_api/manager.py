@@ -58,6 +58,9 @@ class MemeManager:
         self.__refresh_names()
         self.__refresh_tags()
 
+    def get_meme(self, meme_key: str) -> Optional[MemeInfo]:
+        return self.__meme_dict.get(meme_key, None)
+
     def get_memes(self) -> list[MemeInfo]:
         return list(self.__meme_dict.values())
 

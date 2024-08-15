@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Literal
+from typing import Literal, Optional
 
 from nonebot import get_plugin_config
 from pydantic import BaseModel
@@ -17,6 +17,7 @@ class MemeListImageConfig(BaseModel):
 
 class Config(BaseModel):
     meme_generator_base_url: str = "http://127.0.0.1:2233"
+    memes_command_prefixes: Optional[list[str]] = None
     memes_disabled_list: list[str] = []
     memes_check_resources_on_startup: bool = True
     memes_prompt_params_error: bool = False

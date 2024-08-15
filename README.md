@@ -68,6 +68,12 @@ DRIVER=~fastapi+~httpx+~websockets
 - 默认：`http://127.0.0.1:2233`
 - 说明：`meme-generator` web server 地址
 
+#### `memes_command_prefixes`
+
+- 类型：`List[str] | None`
+- 默认：`None`
+- 说明：命令前缀（仅作用于制作表情的命令）；如果不设置默认使用 [NoneBot 命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator)
+
 #### `memes_disabled_list`
 
 - 类型：`List[str]`
