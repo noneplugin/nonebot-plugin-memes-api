@@ -56,3 +56,7 @@ class ArgParserMismatch(ArgMismatch):
 
 class ArgModelMismatch(ArgMismatch):
     pass
+
+
+class MemeFeedback(MemeGeneratorException):
+    pass

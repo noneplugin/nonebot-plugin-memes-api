@@ -27,12 +27,7 @@ from nonebot_plugin_session import EventSession, Session
 from nonebot_plugin_userinfo import ImageSource, UserInfo, get_user_info
 
 from ..config import memes_config
-from ..exception import (
-    ArgMismatch,
-    MemeGeneratorException,
-    TextOrNameNotEnough,
-    TextOverLength,
-)
+from ..exception import MemeGeneratorException
 from ..manager import meme_manager
 from ..recorder import record_meme_generation
 from ..request import MemeInfo, generate_meme
@@ -77,15 +72,8 @@ async def process(
             meme_key=meme.key, images=images, texts=texts, args=args
         )
         await record_meme_generation(session, meme.key)
-    except TextOverLength:
-        await matcher.finish("文字长度过长")
-    except ArgMismatch:
-        await matcher.finish("参数解析错误")
-    except TextOrNameNotEnough:
-        await matcher.finish("文字或名字数量不足")
-    except MemeGeneratorException:
-        logger.warning(traceback.format_exc())
-        await matcher.finish("出错了，请稍后再试")
+    except MemeGeneratorException as e:
+        await matcher.finish(e.message)
 
     msg = UniMessage()
     if show_info:

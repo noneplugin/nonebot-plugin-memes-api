@@ -14,6 +14,7 @@ from .exception import (
     ArgModelMismatch,
     ArgParserMismatch,
     ImageNumberMismatch,
+    MemeFeedback,
     MemeGeneratorException,
     NoSuchMeme,
     OpenImageFailed,
@@ -72,7 +73,9 @@ async def send_request(
                 return resp.text
         elif 520 <= status_code < 600:
             message = resp.json()["detail"]
-            if status_code == 551:
+            if 560 <= status_code < 570:
+                raise MemeFeedback(message)
+            elif status_code == 551:
                 raise ArgParserMismatch(message)
             elif status_code == 552:
                 raise ArgModelMismatch(message)
