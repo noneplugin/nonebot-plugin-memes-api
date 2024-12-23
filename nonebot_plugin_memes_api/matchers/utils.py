@@ -2,13 +2,19 @@ from typing import Annotated
 
 from nonebot.adapters import Event
 from nonebot.matcher import Matcher
-from nonebot_plugin_session import SessionId, SessionIdType
+from nonebot.params import Depends
+from nonebot_plugin_uninfo import Uninfo
 from nonebot_plugin_waiter import waiter
 
 from ..manager import meme_manager
 from ..request import MemeInfo
 
-UserId = Annotated[str, SessionId(SessionIdType.GROUP, include_bot_type=False)]
+
+def get_user_id(uninfo: Uninfo) -> str:
+    return f"{uninfo.scope}_{uninfo.self_id}_{uninfo.scene_path}"
+
+
+UserId = Annotated[str, Depends(get_user_id)]
 
 
 async def find_meme(matcher: Matcher, meme_name: str) -> MemeInfo:
