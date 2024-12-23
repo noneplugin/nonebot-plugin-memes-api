@@ -4,12 +4,12 @@ from itertools import chain
 
 from nonebot_plugin_alconna import Image, Text, on_alconna
 from nonebot_plugin_localstore import get_cache_dir
-from nonebot_plugin_session import EventSession, SessionIdType
+from nonebot_plugin_uninfo import Uninfo
 from pypinyin import Style, pinyin
 
 from ..config import memes_config
 from ..manager import meme_manager
-from ..recorder import get_meme_generation_keys
+from ..recorder import SessionIdType, get_meme_generation_keys
 from ..request import MemeKeyWithProperties, render_meme_list
 from .utils import UserId
 
@@ -25,7 +25,7 @@ help_matcher = on_alconna(
 
 
 @help_matcher.handle()
-async def _(user_id: UserId, session: EventSession):
+async def _(user_id: UserId, session: Uninfo):
     memes = meme_manager.get_memes()
     list_image_config = memes_config.memes_list_image_config
 
