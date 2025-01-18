@@ -6,8 +6,8 @@ from nonebot.params import Depends
 from nonebot_plugin_uninfo import Uninfo
 from nonebot_plugin_waiter import waiter
 
+from ..api import Meme
 from ..manager import meme_manager
-from ..request import MemeInfo
 
 
 def get_user_id(uninfo: Uninfo) -> str:
@@ -17,16 +17,17 @@ def get_user_id(uninfo: Uninfo) -> str:
 UserId = Annotated[str, Depends(get_user_id)]
 
 
-async def find_meme(matcher: Matcher, meme_name: str) -> MemeInfo:
+async def find_meme(matcher: Matcher, meme_name: str) -> Meme:
     found_memes = meme_manager.find(meme_name)
     found_num = len(found_memes)
 
     if found_num == 0:
-        if searched_memes := meme_manager.search(meme_name, limit=5):
+        searched_memes = (await meme_manager.search(meme_name))[:5]
+        if searched_memes:
             await matcher.finish(
                 f"表情 {meme_name} 不存在，你可能在找：\n"
                 + "\n".join(
-                    f"* {meme.key} ({'/'.join(meme.keywords)})"
+                    f"* {meme.key} ({'/'.join(meme.info.keywords)})"
                     for meme in searched_memes
                 )
             )
@@ -39,7 +40,7 @@ async def find_meme(matcher: Matcher, meme_name: str) -> MemeInfo:
     await matcher.send(
         f"找到 {found_num} 个表情，请发送编号选择：\n"
         + "\n".join(
-            f"{i + 1}. {meme.key} ({'/'.join(meme.keywords)})"
+            f"{i + 1}. {meme.key} ({'/'.join(meme.info.keywords)})"
             for i, meme in enumerate(found_memes)
         )
     )

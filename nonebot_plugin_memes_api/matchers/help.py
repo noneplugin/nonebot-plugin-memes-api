@@ -1,23 +1,19 @@
-import hashlib
 from datetime import datetime, timedelta, timezone
-from itertools import chain
 
+from nonebot.log import logger
 from nonebot_plugin_alconna import Image, Text, on_alconna
-from nonebot_plugin_localstore import get_cache_dir
 from nonebot_plugin_uninfo import Uninfo
-from pypinyin import Style, pinyin
 
+from ..api import MemeProperties, render_meme_list
 from ..config import memes_config
+from ..exception import MemeGeneratorException
 from ..manager import meme_manager
 from ..recorder import SessionIdType, get_meme_generation_keys
-from ..request import MemeKeyWithProperties, render_meme_list
 from .utils import UserId
-
-memes_cache_dir = get_cache_dir("nonebot_plugin_memes_api")
 
 help_matcher = on_alconna(
     "表情包制作",
-    aliases={"表情列表", "头像表情包", "文字表情包"},
+    aliases={"表情列表", "表情包列表", "头像表情包", "文字表情包"},
     block=True,
     priority=11,
     use_cmd_start=True,
@@ -29,23 +25,6 @@ async def _(user_id: UserId, session: Uninfo):
     memes = meme_manager.get_memes()
     list_image_config = memes_config.memes_list_image_config
 
-    sort_by = list_image_config.sort_by
-    sort_reverse = list_image_config.sort_reverse
-    if sort_by == "key":
-        memes = sorted(memes, key=lambda meme: meme.key, reverse=sort_reverse)
-    elif sort_by == "keywords":
-        memes = sorted(
-            memes,
-            key=lambda meme: "".join(
-                chain.from_iterable(pinyin(meme.keywords[0], style=Style.TONE3))
-            ),
-            reverse=sort_reverse,
-        )
-    elif sort_by == "date_created":
-        memes = sorted(memes, key=lambda meme: meme.date_created, reverse=sort_reverse)
-    elif sort_by == "date_modified":
-        memes = sorted(memes, key=lambda meme: meme.date_modified, reverse=sort_reverse)
-
     label_new_timedelta = list_image_config.label_new_timedelta
     label_hot_threshold = list_image_config.label_hot_threshold
     label_hot_days = list_image_config.label_hot_days
@@ -56,49 +35,30 @@ async def _(user_id: UserId, session: Uninfo):
         time_start=datetime.now(timezone.utc) - timedelta(days=label_hot_days),
     )
 
-    meme_list: list[MemeKeyWithProperties] = []
+    meme_properties: dict[str, MemeProperties] = {}
     for meme in memes:
-        labels = []
-        if datetime.now() - meme.date_created < label_new_timedelta:
-            labels.append("new")
-        if meme_generation_keys.count(meme.key) >= label_hot_threshold:
-            labels.append("hot")
+        new = datetime.now(timezone.utc) - meme.info.date_created < label_new_timedelta
+        hot = meme_generation_keys.count(meme.key) >= label_hot_threshold
         disabled = not meme_manager.check(user_id, meme.key)
-        meme_list.append(
-            MemeKeyWithProperties(meme_key=meme.key, disabled=disabled, labels=labels)
-        )
+        properties = MemeProperties(disabled=disabled, hot=hot, new=new)
+        meme_properties[meme.key] = properties
 
-    # cache rendered meme list
-    meme_list_hashable = [
-        (
-            {
-                "key": meme.key,
-                "keywords": meme.keywords,
-                "shortcuts": [
-                    shortcut.humanized or shortcut.key for shortcut in meme.shortcuts
-                ],
-                "tags": sorted(meme.tags),
-            },
-            prop,
-        )
-        for meme, prop in zip(memes, meme_list)
-    ]
-    meme_list_hash = hashlib.md5(str(meme_list_hashable).encode("utf8")).hexdigest()
-    meme_list_cache_file = memes_cache_dir / f"{meme_list_hash}.jpg"
-    if not meme_list_cache_file.exists():
-        img = await render_meme_list(
-            meme_list,
+    try:
+        output = await render_meme_list(
+            meme_properties=meme_properties,
+            exclude_memes=memes_config.memes_disabled_list,
+            sort_by=list_image_config.sort_by,
+            sort_reverse=list_image_config.sort_reverse,
             text_template=list_image_config.text_template,
             add_category_icon=list_image_config.add_category_icon,
         )
-        with open(meme_list_cache_file, "wb") as f:
-            f.write(img)
-    else:
-        img = meme_list_cache_file.read_bytes()
+    except MemeGeneratorException as e:
+        logger.warning(f"表情列表图生成失败：{e}")
+        return
 
     msg = Text(
-        "触发方式：“关键词 + 图片/文字”\n"
+        "触发方式：“关键词 + 图片/文字/@某人”\n"
         "发送 “表情详情 + 关键词” 查看表情参数和预览\n"
         "目前支持的表情列表："
-    ) + Image(raw=img)
-    await msg.send()
+    ) + Image(raw=output)
+    await msg.finish()

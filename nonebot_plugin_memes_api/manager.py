@@ -7,10 +7,9 @@ from nonebot.compat import PYDANTIC_V2, model_dump, type_validate_python
 from nonebot.log import logger
 from nonebot_plugin_localstore import get_config_file
 from pydantic import BaseModel
-from rapidfuzz import process
 
+from .api import Meme, get_memes, search_memes
 from .config import memes_config
-from .request import MemeInfo, get_meme_info, get_meme_keys
 
 config_path = get_config_file("nonebot_plugin_memes_api", "meme_manager.yml")
 
@@ -41,27 +40,25 @@ class MemeManager:
     def __init__(self, path: Path = config_path):
         self.__path = path
         self.__meme_config: dict[str, MemeConfig] = {}
-        self.__meme_dict: dict[str, MemeInfo] = {}
-        self.__meme_names: dict[str, list[MemeInfo]] = {}
-        self.__meme_tags: dict[str, list[MemeInfo]] = {}
+        self.__meme_dict: dict[str, Meme] = {}
+        self.__meme_names: dict[str, list[Meme]] = {}
 
     async def init(self):
         self.__meme_dict = {
-            meme_key: await get_meme_info(meme_key)
-            for meme_key in filter(
-                lambda meme_key: meme_key not in memes_config.memes_disabled_list,
-                sorted(await get_meme_keys()),
+            meme.key: meme
+            for meme in filter(
+                lambda meme: meme.key not in memes_config.memes_disabled_list,
+                sorted(await get_memes(), key=lambda meme: meme.key),
             )
         }
         self.__load()
         self.__dump()
         self.__refresh_names()
-        self.__refresh_tags()
 
-    def get_meme(self, meme_key: str) -> Optional[MemeInfo]:
+    def get_meme(self, meme_key: str) -> Optional[Meme]:
         return self.__meme_dict.get(meme_key, None)
 
-    def get_memes(self) -> list[MemeInfo]:
+    def get_memes(self) -> list[Meme]:
         return list(self.__meme_dict.values())
 
     def block(self, user_id: str, meme_key: str):
@@ -85,38 +82,16 @@ class MemeManager:
         config.mode = mode
         self.__dump()
 
-    def find(self, meme_name: str) -> list[MemeInfo]:
+    def find(self, meme_name: str) -> list[Meme]:
         meme_name = meme_name.lower()
         if meme_name in self.__meme_names:
             return self.__meme_names[meme_name]
         return []
 
-    def search(
-        self,
-        meme_name: str,
-        include_tags: bool = False,
-        limit: Optional[int] = None,
-        score_cutoff: float = 80.0,
-    ) -> list[MemeInfo]:
-        meme_name = meme_name.lower()
-        meme_names = process.extract(
-            meme_name, self.__meme_names.keys(), limit=limit, score_cutoff=score_cutoff
-        )
-        result: dict[str, MemeInfo] = {}
-        for name, _, _ in meme_names:
-            for meme in self.__meme_names[name]:
-                result[meme.key] = meme
-        if include_tags:
-            meme_tags = process.extract(
-                meme_name,
-                self.__meme_tags.keys(),
-                limit=limit,
-                score_cutoff=score_cutoff,
-            )
-            for tag, _, _ in meme_tags:
-                for meme in self.__meme_tags[tag]:
-                    result[meme.key] = meme
-        return list(result.values())
+    async def search(self, meme_name: str, include_tags: bool = False) -> list[Meme]:
+        meme_keys = await search_memes(meme_name, include_tags=include_tags)
+        meme_keys = [key for key in meme_keys if key in self.__meme_dict]
+        return [self.__meme_dict[key] for key in meme_keys]
 
     def check(self, user_id: str, meme_key: str) -> bool:
         if meme_key not in self.__meme_config:
@@ -166,23 +141,16 @@ class MemeManager:
         for meme in self.__meme_dict.values():
             names = set()
             names.add(meme.key.lower())
-            for keyword in meme.keywords:
+            for keyword in meme.info.keywords:
                 names.add(keyword.lower())
-            for shortcut in meme.shortcuts:
-                names.add((shortcut.humanized or shortcut.key).lower())
+            for shortcut in meme.info.shortcuts:
+                names.add(shortcut.pattern.lower())
+                if shortcut.humanized:
+                    names.add(shortcut.humanized.lower())
             for name in names:
                 if name not in self.__meme_names:
                     self.__meme_names[name] = []
                 self.__meme_names[name].append(meme)
-
-    def __refresh_tags(self):
-        self.__meme_tags = {}
-        for meme in self.__meme_dict.values():
-            for tag in meme.tags:
-                tag = tag.lower()
-                if tag not in self.__meme_tags:
-                    self.__meme_tags[tag] = []
-                self.__meme_tags[tag].append(meme)
 
 
 meme_manager = MemeManager()

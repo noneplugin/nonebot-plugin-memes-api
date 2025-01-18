@@ -24,7 +24,7 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 
 > 本插件为 [nonebot-plugin-memes](https://github.com/noneplugin/nonebot-plugin-memes) 调用 api 版本
 >
-> 可以将本插件与 [meme-generator](https://github.com/MeetWq/meme-generator) 分开部署
+> 可以将本插件与 [meme-generator](https://github.com/MemeCrafters/meme-generator-rs) 分开部署
 
 ### 安装
 
@@ -42,7 +42,7 @@ pip install nonebot_plugin_memes_api
 
 并按照 [NoneBot 加载插件](https://nonebot.dev/docs/tutorial/create-plugin#加载插件) 加载插件
 
-#### 配置驱动器​
+#### 配置驱动器 ​
 
 插件需要“客户端型驱动器”（如 httpx）来下载图片等，驱动器安装和配置参考 [NoneBot 选择驱动器](https://nonebot.dev/docs/advanced/driver)
 
@@ -51,12 +51,6 @@ pip install nonebot_plugin_memes_api
 ```
 DRIVER=~fastapi+~httpx+~websockets
 ```
-
-#### meme-generator 部署
-
-按照 [meme-generator 安装](https://github.com/MeetWq/meme-generator#安装) 中的说明安装，并下载图片、安装字体等
-
-之后通过 `meme run` 启动 web server
 
 ### 配置项
 
@@ -80,23 +74,50 @@ DRIVER=~fastapi+~httpx+~websockets
 - 默认：`[]`
 - 说明：禁用的表情包列表，需填写表情的`key`，可在 [meme-generator 表情列表](https://github.com/MeetWq/meme-generator/blob/main/docs/memes.md) 中查看。若只是临时关闭，可以用下文中的“表情包开关”
 
-#### `memes_prompt_params_error`
+#### `memes_params_mismatch_policy`
 
-- 类型：`bool`
-- 默认：`False`
-- 说明：是否在图片/文字数量不符时提示（谨慎使用，容易误触发）
+- 类型：`MemeParamsMismatchPolicy`
+- 说明：图片/文字数量不符时的处理方式，其中具体设置项如下：
+  - `too_much_text`
+    - 类型：`str`
+    - 默认：`"ignore"`
+    - 可选项：`"ignore"`（忽略本次命令）、 `"prompt"`（发送提示）, `"drop"`（去掉多余的文字）
+  - `too_few_text`
+    - 类型：`str`
+    - 默认：`"ignore"`
+    - 可选项：`"ignore"`（忽略本次命令）、 `"prompt"`（发送提示）, `"get"`（交互式获取所需的文字）
+  - `too_much_image`
+    - 类型：`str`
+    - 默认：`"ignore"`
+    - 可选项：`"ignore"`（忽略本次命令）、 `"prompt"`（发送提示）, `"drop"`（去掉多余的图片）
+  - `too_few_image`
+    - 类型：`str`
+    - 默认：`"ignore"`
+    - 可选项：`"ignore"`（忽略本次命令）、 `"prompt"`（发送提示）, `"get"`（交互式获取所需的图片）
+- `memes_params_mismatch_policy` 在 `.env` 文件中的设置示例如下：
+
+```
+memes_params_mismatch_policy='
+{
+  "too_much_text": "drop",
+  "too_few_text": "get",
+  "too_much_image": "drop",
+  "too_few_image": "get"
+}
+'
+```
 
 #### `memes_use_sender_when_no_image`
 
 - 类型：`bool`
 - 默认：`False`
-- 说明：在表情需要至少1张图且没有输入图片时，是否使用发送者的头像（谨慎使用，容易误触发）
+- 说明：在表情需要至少 1 张图且没有输入图片时，是否使用发送者的头像
 
 #### `memes_use_default_when_no_text`
 
 - 类型：`bool`
 - 默认：`False`
-- 说明：在表情需要至少1段文字且没有输入文字时，是否使用默认文字（谨慎使用，容易误触发）
+- 说明：在表情需要至少 1 段文字且没有输入文字时，是否使用默认文字
 
 #### `memes_random_meme_show_info`
 

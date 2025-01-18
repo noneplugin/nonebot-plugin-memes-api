@@ -16,7 +16,7 @@ from alembic import op
 revision: str = "1ad5a608c9e0"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = ("nonebot_plugin_memes_api_v2",)
-depends_on: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = "14175fde8186"
 
 
 def upgrade(name: str = "") -> None:
