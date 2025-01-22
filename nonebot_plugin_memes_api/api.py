@@ -1,4 +1,5 @@
 import base64
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import md5
@@ -316,7 +317,11 @@ async def generate_meme(
 @dataclass
 class Meme:
     key: str
-    info: MemeInfo
+    _info: MemeInfo
+
+    @property
+    def info(self) -> MemeInfo:
+        return deepcopy(self._info)
 
     async def generate(
         self,
