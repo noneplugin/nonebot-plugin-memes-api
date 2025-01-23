@@ -303,10 +303,7 @@ async def generate_meme(
 
     payload = {
         "images": image_ids,
-        "image_data": [
-            {"id": image_id, "base64_data": image_data[image_id]}
-            for image_id in image_data
-        ],
+        "image_data": image_data,
         "texts": texts,
         "options": options,
     }
