@@ -267,14 +267,12 @@ async def get_meme_info(meme_key: str) -> MemeInfo:
     )
 
 
-async def get_meme_infos() -> dict[str, MemeInfo]:
+async def get_meme_infos() -> list[MemeInfo]:
     resp = cast(
-        dict[str, dict[str, Any]],
+        list[dict[str, Any]],
         await send_request("/meme/infos", "GET", "JSON"),
     )
-    return {
-        meme_key: type_validate_python(MemeInfo, resp[meme_key]) for meme_key in resp
-    }
+    return [type_validate_python(MemeInfo, meme_info) for meme_info in resp]
 
 
 async def generate_meme_preview(meme_key: str) -> bytes:
@@ -334,4 +332,4 @@ class Meme:
 
 async def get_memes() -> list[Meme]:
     meme_infos = await get_meme_infos()
-    return [Meme(key, info) for key, info in meme_infos.items()]
+    return [Meme(info.key, info) for info in meme_infos]
