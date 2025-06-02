@@ -22,9 +22,18 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 
 </div>
 
+> [!NOTE]
 > 本插件为 [nonebot-plugin-memes](https://github.com/MemeCrafters/nonebot-plugin-memes) 调用 api 版本
 >
 > 可以将本插件与 [meme-generator](https://github.com/MemeCrafters/meme-generator-rs) 分开部署
+
+> [!WARNING]
+>
+> 本插件自 v0.5.0 版本起与 rust 版 [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs) 对接
+>
+> 之前的版本与 python 版 [meme-generator](https://github.com/MemeCrafters/meme-generator) 对接
+> 
+> 请注意区分！！！
 
 ### 安装
 
