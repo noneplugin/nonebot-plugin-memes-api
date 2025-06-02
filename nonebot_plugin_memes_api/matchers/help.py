@@ -99,7 +99,7 @@ async def _(user_id: UserId, session: Uninfo):
     msg = Text(
         "触发方式：“关键词 表情名 图片/文字/@某人\n"
         f"例：{memes_config.memes_command_prefixes}卡提举牌 抽我\n"
-        f"使用{memes_config.memes_command_prefixes}gif 可返回可添加表情\n"
+        f"使用gif{memes_config.memes_command_prefixes} 可返回可添加表情\n"
         "发送“表情详情+关键词”查看预览\n"
         "群管可 禁用/启动表情+表情名\n"
         "目前支持的表情列表："

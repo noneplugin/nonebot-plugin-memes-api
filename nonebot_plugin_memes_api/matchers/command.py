@@ -274,7 +274,7 @@ def create_matcher(meme: MemeInfo):
         ),
         aliases=set(meme.keywords[1:]),
         block=False,
-        priority=12,
+        priority=13,
         extensions=[ReplyMergeExtension()],
     )
     for shortcut in meme.shortcuts:
