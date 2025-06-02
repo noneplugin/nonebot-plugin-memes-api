@@ -69,7 +69,7 @@ def load_sensitive_words(file_path="../ban_word_list.txt"):
     if os.path.isdir(file_path):
         return
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
     except Exception:
         return []

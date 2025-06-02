@@ -17,7 +17,7 @@ memes_cache_dir = get_cache_dir("nonebot_plugin_memes_api")
 
 help_matcher = on_alconna(
     "表情包制作",
-    aliases={"表情列表", "头像表情包", "文字表情包", '表情帮助'},
+    aliases={"表情列表", "头像表情包", "文字表情包", "表情帮助"},
     block=True,
     priority=11,
     use_cmd_start=True,

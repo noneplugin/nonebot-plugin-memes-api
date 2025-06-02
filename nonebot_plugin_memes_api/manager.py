@@ -11,7 +11,8 @@ from rapidfuzz import process
 from .config import memes_config
 from .request import MemeInfo, get_meme_info, get_meme_keys
 
-config_path = Path('./data/memes_config.yaml')
+config_path = Path("./data/memes_config.yaml")
+
 
 class MemeMode(IntEnum):
     BLACK = 0

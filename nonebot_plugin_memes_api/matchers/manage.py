@@ -62,6 +62,7 @@ async def _(matcher: Matcher, user_id: UserId, meme_name: str):
     else:
         await matcher.finish(f"表情 {meme.key} 已被主人禁用")
 
+
 @block_gl_matcher.handle()
 async def _(matcher: Matcher, meme_name: str):
     meme = await find_meme(matcher, meme_name)
