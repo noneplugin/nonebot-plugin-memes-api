@@ -21,7 +21,7 @@ from nonebot_plugin_alconna import (
     MultiVar,
     Text,
     UniMessage,
-    UniMsg, # ？为啥多此一举
+    UniMsg,  # ？为啥多此一举
     on_alconna,
 )
 from nonebot_plugin_alconna.builtins.extensions.reply import ReplyMergeExtension
@@ -42,13 +42,19 @@ alc_config.command_max_count += 1000
 
 
 import io
-import os, requests
+import os
+import requests
+
 os.makedirs(ban_path, exist_ok=True)
 try:
-    version = requests.get("https://download.loping151.com/ban_words/version.txt", timeout=10).text
+    version = requests.get(
+        "https://download.loping151.com/ban_words/version.txt", timeout=10
+    ).text
     ban_path_version = os.path.join(ban_path, f"ban_words_{version}.txt")
     if not os.path.exists(ban_path_version):
-        resp = requests.get("https://download.loping151.com/ban_words/ban.txt", timeout=10)
+        resp = requests.get(
+            "https://download.loping151.com/ban_words/ban.txt", timeout=10
+        )
         if resp.status_code == 200:
             with open(ban_path_version, "w", encoding="utf-8") as f:
                 f.write(resp.text)
@@ -58,13 +64,18 @@ except Exception:
 
 sensitive_words = load_sensitive_words(ban_path)
 
+
 def to_gif(img_bytes: bytes) -> bytes:
     try:
         img = PILImage.open(io.BytesIO(img_bytes))
         if img.format == "GIF":
             return img_bytes
         try:
-            img = img.quantize(colors=256, method=PILImage.LIBIMAGEQUANT, dither=PILImage.FLOYDSTEINBERG).convert("RGBA")
+            img = img.quantize(
+                colors=256,
+                method=PILImage.LIBIMAGEQUANT,
+                dither=PILImage.FLOYDSTEINBERG,
+            ).convert("RGBA")
         except Exception:
             logger.debug("没有安装 libimagequant，使用默认量化方法")
             img = img.convert("RGBA")
@@ -74,7 +85,8 @@ def to_gif(img_bytes: bytes) -> bytes:
     except Exception:
         logger.error("转换图片为 GIF 失败", exc_info=True)
         return img_bytes
-    
+
+
 def resize_image(bytes: bytes, max_size: int = 360) -> bytes:
     try:
         img = PILImage.open(io.BytesIO(bytes))
@@ -88,7 +100,8 @@ def resize_image(bytes: bytes, max_size: int = 360) -> bytes:
     except Exception:
         logger.error("调整图片大小失败", exc_info=True)
         return bytes
-    
+
+
 async def process(
     bot: Bot,
     event: Event,
@@ -104,7 +117,7 @@ async def process(
     force_gif: bool = False,
 ):
     image_contents: list[bytes] = []
-    
+
     for txt_seq in range(len(texts)):
         for word in sensitive_words:
             if word in texts[txt_seq]:
@@ -148,10 +161,10 @@ async def process(
     elif resize_image:
         result = resize_image(result, resize_image_size)
     msg += UniMessage.image(raw=result)
-    
+
     if random.random() < 0.1:
         msg += "注意避免群聊刷屏哦~群管可启用禁用表情"
-    
+
     await msg.send()
 
 
@@ -243,7 +256,7 @@ def create_matcher(meme: MemeInfo):
             else []
         )
     ]
-    
+
     meme_matcher = on_alconna(
         Alconna(
             prefixes,
@@ -268,7 +281,8 @@ def create_matcher(meme: MemeInfo):
 
     meme_matcher_gif = on_alconna(
         Alconna(
-            [prefix + 'gif' for prefix in prefixes] + [prefix + 'gif ' for prefix in prefixes],
+            [prefix + "gif" for prefix in prefixes]
+            + [prefix + "gif " for prefix in prefixes],
             meme.keywords[0],
             *options,
             arg_meme_params,
@@ -287,7 +301,7 @@ def create_matcher(meme: MemeInfo):
             humanized=shortcut.humanized,
         )
     matchers.append(meme_matcher_gif)
-    
+
     async def _meme_matcher(
         bot: Bot,
         event: Event,
@@ -356,12 +370,14 @@ def create_matcher(meme: MemeInfo):
                 list(msg) for msg in uni_msg.include(Image, At, Text).split()
             )
             params: list[T_MemeParams] = list(uni_segs)
-            _, new_images, new_names = await handle_params(matcher, session, interface, params)
+            _, new_images, new_names = await handle_params(
+                matcher, session, interface, params
+            )
             for i in range(len(new_names)):
                 if i < len(new_images):
                     new_images[i].name = new_names[i]
             return new_images
-        
+
         policy = memes_config.memes_params_mismatch_policy
 
         text_range = (
@@ -374,7 +390,7 @@ def create_matcher(meme: MemeInfo):
             if meme.params_type.min_images != meme.params_type.max_images
             else str(meme.params_type.min_images)
         )
-        
+
         if len(texts) < meme.params_type.min_texts:
             msg = f"文字数量不符，应为 {text_range}，实际传入 {len(texts)}"
             if policy.too_few_text == "ignore":
@@ -425,7 +441,9 @@ def create_matcher(meme: MemeInfo):
                     min = meme.params_type.min_images - len(images)
                     max = meme.params_type.max_images - len(images)
                     num = f"{min} ~ {max}" if min != max else str(min)
-                    await matcher.send(f"请继续发送 {num} 张图片/@群友/“自己”以使用头像")
+                    await matcher.send(
+                        f"请继续发送 {num} 张图片/@群友/“自己”以使用头像"
+                    )
                     resp = await get_images.wait(timeout=30)
                     if resp is None:
                         await matcher.finish()
@@ -444,19 +462,60 @@ def create_matcher(meme: MemeInfo):
 
             elif policy.too_much_image == "drop":
                 images = images[: meme.params_type.max_images]
-                
+
         matcher.stop_propagation()
         await process(
-            bot, event, state, matcher, session, meme, images, texts, users, args, force_gif=force_gif
+            bot,
+            event,
+            state,
+            matcher,
+            session,
+            meme,
+            images,
+            texts,
+            users,
+            args,
+            force_gif=force_gif,
         )
-        
+
     @meme_matcher.handle()
-    async def _(bot: Bot, event: Event, state: T_State, matcher: Matcher, user_id: UserId, session: Uninfo, interface: QryItrface, alc_matches: AlcMatches):
-        await _meme_matcher(bot, event, state, matcher, user_id, session, interface, alc_matches)
+    async def _(
+        bot: Bot,
+        event: Event,
+        state: T_State,
+        matcher: Matcher,
+        user_id: UserId,
+        session: Uninfo,
+        interface: QryItrface,
+        alc_matches: AlcMatches,
+    ):
+        await _meme_matcher(
+            bot, event, state, matcher, user_id, session, interface, alc_matches
+        )
 
     @meme_matcher_gif.handle()
-    async def _(bot: Bot, event: Event, state: T_State, matcher: Matcher, user_id: UserId, session: Uninfo, interface: QryItrface, alc_matches: AlcMatches):
-        await _meme_matcher(bot, event, state, matcher, user_id, session, interface, alc_matches, force_gif=True)
+    async def _(
+        bot: Bot,
+        event: Event,
+        state: T_State,
+        matcher: Matcher,
+        user_id: UserId,
+        session: Uninfo,
+        interface: QryItrface,
+        alc_matches: AlcMatches,
+    ):
+        await _meme_matcher(
+            bot,
+            event,
+            state,
+            matcher,
+            user_id,
+            session,
+            interface,
+            alc_matches,
+            force_gif=True,
+        )
+
 
 def create_matchers():
     for meme in meme_manager.get_memes():

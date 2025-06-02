@@ -43,7 +43,7 @@ class Config(BaseModel):
 
 
 memes_config = get_plugin_config(Config)
-ban_path = '..' # 默认在Bot文件夹外 可改为 ./data/ban
+ban_path = ".."  # 默认在Bot文件夹外 可改为 ./data/ban
 use_gif = False  # 是否使用gif表情
 resize_image = True  # 是否缩放图片
 resize_image_size = 360  # 缩放图片的最大尺寸
