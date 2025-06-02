@@ -78,6 +78,8 @@ def to_gif(img_bytes: bytes) -> bytes:
 def resize_image(bytes: bytes, max_size: int = 360) -> bytes:
     try:
         img = PILImage.open(io.BytesIO(bytes))
+        if img.format == "GIF":
+            return bytes
         if img.size[0] > max_size or img.size[1] > max_size:
             img.thumbnail((max_size, max_size), PILImage.LANCZOS)
         output = io.BytesIO()
