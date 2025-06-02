@@ -8,7 +8,7 @@ require("nonebot_plugin_localstore")
 require("nonebot_plugin_orm")
 
 from . import matchers as matchers
-from .config import Config, memes_config
+from .config import Config, memes_config, ban_path
 
 memes_prefixes = memes_config.memes_command_prefixes
 memes_prefix = memes_prefixes[0] if memes_prefixes else ""

@@ -17,7 +17,7 @@ memes_cache_dir = get_cache_dir("nonebot_plugin_memes_api")
 
 help_matcher = on_alconna(
     "表情包制作",
-    aliases={"表情列表", "头像表情包", "文字表情包"},
+    aliases={"表情列表", "头像表情包", "文字表情包", '表情帮助'},
     block=True,
     priority=11,
     use_cmd_start=True,
@@ -97,8 +97,11 @@ async def _(user_id: UserId, session: Uninfo):
         img = meme_list_cache_file.read_bytes()
 
     msg = Text(
-        "触发方式：“关键词(bq) + 图片/文字/@某人”\n"
-        "发送 “表情详情 + 关键词” 查看表情参数和预览\n"
+        "触发方式：“关键词 表情名 图片/文字/@某人\n"
+        f"例：{memes_config.memes_command_prefixes}卡提举牌 抽我\n"
+        "发送“表情详情+关键词”查看预览\n"
+        "群管可 禁用/启动表情+表情名\n"
+        "部分表情已被全局禁用\n"
         "目前支持的表情列表："
     ) + Image(raw=img)
     await msg.send()

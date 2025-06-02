@@ -20,14 +20,14 @@ class MemeParamsMismatchPolicy(BaseModel):
     too_few_text: Literal["ignore", "prompt", "get"] = "ignore"
     too_much_image: Literal["ignore", "prompt", "drop"] = "ignore"
     too_few_image: Literal["ignore", "prompt", "get"] = "ignore"
-
-
+    
+    
 class MultipleImageConfig(BaseModel):
     direct_send_threshold: int = 10
     send_zip_file: bool = True
     send_forward_msg: bool = False
 
-
+    
 class Config(BaseModel):
     meme_generator_base_url: str = "http://127.0.0.1:2234"
     memes_command_prefixes: Optional[list[str]] = None
@@ -43,3 +43,5 @@ class Config(BaseModel):
 
 
 memes_config = get_plugin_config(Config)
+ban_path = '..' # 默认在Bot文件夹外 可改为 ./data/ban
+notice_prob = 0.1

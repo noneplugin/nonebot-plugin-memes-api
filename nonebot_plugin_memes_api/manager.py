@@ -5,15 +5,13 @@ from typing import Any, Optional
 import yaml
 from nonebot.compat import PYDANTIC_V2, model_dump, type_validate_python
 from nonebot.log import logger
-from nonebot_plugin_localstore import get_config_file
 from pydantic import BaseModel
 from rapidfuzz import process
 
 from .config import memes_config
 from .request import MemeInfo, get_meme_info, get_meme_keys
 
-config_path = get_config_file("nonebot_plugin_memes_api", "meme_manager.yml")
-
+config_path = Path('./data/memes_config.yaml')
 
 class MemeMode(IntEnum):
     BLACK = 0
@@ -75,10 +73,12 @@ class MemeManager:
     def unblock(self, user_id: str, meme_key: str):
         config = self.__meme_config[meme_key]
         if config.mode == MemeMode.WHITE and user_id not in config.white_list:
-            config.white_list.append(user_id)
+            return False
+            # config.white_list.append(user_id)
         if config.mode == MemeMode.BLACK and user_id in config.black_list:
             config.black_list.remove(user_id)
         self.__dump()
+        return True
 
     def change_mode(self, mode: MemeMode, meme_key: str):
         config = self.__meme_config[meme_key]

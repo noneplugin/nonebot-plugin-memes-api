@@ -1,4 +1,5 @@
 from typing import Annotated
+import os
 
 from nonebot.adapters import Event
 from nonebot.matcher import Matcher
@@ -62,3 +63,13 @@ async def find_meme(matcher: Matcher, meme_name: str) -> MemeInfo:
             return found_memes[index - 1]
 
     await matcher.finish()
+
+
+def load_sensitive_words(file_path="../ban_word_list.txt"):
+    if os.path.isdir(file_path):
+        return
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return [line.strip() for line in f if line.strip()]
+    except Exception:
+        return []

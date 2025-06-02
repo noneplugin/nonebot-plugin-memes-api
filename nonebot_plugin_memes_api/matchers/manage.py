@@ -57,9 +57,10 @@ async def _(matcher: Matcher, user_id: UserId, meme_name: str):
 @unblock_matcher.handle()
 async def _(matcher: Matcher, user_id: UserId, meme_name: str):
     meme = await find_meme(matcher, meme_name)
-    meme_manager.unblock(user_id, meme.key)
-    await matcher.finish(f"表情 {meme.key} 启用成功")
-
+    if meme_manager.unblock(user_id, meme.key):
+        await matcher.finish(f"表情 {meme.key} 启用成功")
+    else:
+        await matcher.finish(f"表情 {meme.key} 已被主人禁用")
 
 @block_gl_matcher.handle()
 async def _(matcher: Matcher, meme_name: str):

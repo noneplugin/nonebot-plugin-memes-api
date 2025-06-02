@@ -6,10 +6,11 @@
 
 # nonebot-plugin-memes-api
 
+
 _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调用 api 版本 ✨_
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/noneplugin/nonebot-plugin-memes-api" alt="license">
+  <img src="https://img.shields.io/github/license/noneplugin/nonebot-plugin-memes-api-py" alt="license">
   <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/nonebot-2.3.0+-red.svg" alt="NoneBot">
   <a href="https://pypi.org/project/nonebot-plugin-memes-api">
@@ -21,6 +22,17 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 </p>
 
 </div>
+
+## ❗特色说明
+
+此分支适用于 `meme-generator` 的 Python 版本，具有以下额外特性：
+
+- **屏蔽词**：内置屏蔽词功能，过滤不适合出现在中文互联网中的词汇（为自定义实现，可能不够全面）。词表位置可在 `config.py` 中修改。
+- **禁用机制**：全局禁用采用强制禁用方式（非白名单），禁用数据存储路径为 `./data` 目录下。
+- **表情转换**：在 QQ 中以表情包形式发送表情，提升显示效果，而非普通图片。
+- **防止刷屏提醒** 以一定概率发送 请勿刷屏 消息，概率可在 `config.py` 中修改。
+
+其余特性已与0.5.1保持一致。
 
 > 本插件为 [nonebot-plugin-memes](https://github.com/noneplugin/nonebot-plugin-memes) 调用 api 版本
 >
