@@ -32,7 +32,7 @@ _✨ [Nonebot2](https://github.com/nonebot/nonebot2) 表情包制作插件 调�
 > 本插件自 v0.5.0 版本起与 rust 版 [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs) 对接
 >
 > 之前的版本与 python 版 [meme-generator](https://github.com/MemeCrafters/meme-generator) 对接
-> 
+>
 > 请注意区分！！！
 
 ### 安装
